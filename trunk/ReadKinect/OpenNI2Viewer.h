@@ -31,18 +31,29 @@ typedef pcl::PointCloud<PointT> PointCloudT;
 
 class loader{
 public:
-	//Metodos de callback que se invocan en cada frame via KINECT
+
+	//Vinculador con el kinect
 	pcl::io::OpenNI2Grabber* openniGrabber;
-	void cloud_Callback(const pcl::PointCloud<PointT>::ConstPtr& cloud);
-	void image_callback (const boost::shared_ptr<pcl::io::Image>& image);
-	void dephtImage_callback (const boost::shared_ptr<pcl::io::DepthImage>& image);
-	//Visualizador
+
+	//Visualizador de la nube
 	boost::shared_ptr<pcl::visualization::CloudViewer> viewer;
 
+	//Objetos que almacenan temporalmente en el cargador la nube global y las imagenes
+	pcl::PointCloud<PointT>::ConstPtr global_cloud;
+	cv::Mat global_rgbFrame,global_depthFrame;
+
+	//Objeto FRAME global
+	FrameRGBD* global_frame;
+
+	//Variables de estado
+	bool isCloud, isImage, isDepth, isKinect, isFile, isFull, isRun;
+	int filesSaved, filesReaded;
 
 	//Metodos para iniciar y detener la lectura desde disco o KINECT
+	//TODO: Verificar si realmente se necesitan
 	void start();
 	void stop();
+
 	//Metodo de descarga y lectura del frame actual
 	FrameRGBD download();
 	bool read();
@@ -52,18 +63,17 @@ public:
 	loader(std::string path, bool KINECT);
 	~loader();
 
-	//Variables de estado
-	bool isCloud, isImage, isDepth, isKinect, isFile, isFull, isRun;
-	int filesSaved, filesReaded;
-	std::string framepath;
-	//Objetos que almacenan temporalmente en el cargador la nube global y las imagenes
-	pcl::PointCloud<PointT>::ConstPtr global_cloud;
-	cv::Mat global_rgbFrame,global_depthFrame;
-	//Objeto FRAME global
-	FrameRGBD* global_frame;
 private:
+	//Metodos de callback que se invocan en cada frame via KINECT
+	void cloud_Callback(const pcl::PointCloud<PointT>::ConstPtr& cloud);
+	void image_callback (const boost::shared_ptr<pcl::io::Image>& image);
+	void dephtImage_callback (const boost::shared_ptr<pcl::io::DepthImage>& image);
+
 	//Variable MUTEX para control de hilos
 	boost::mutex mtx_;
+
+	//Variable con la ruta actual de frame
+	std::string framepath;
 };
 
 //Constructor 1: Por defecto se abre el KINECT
@@ -117,6 +127,7 @@ loader::loader(std::string path, bool KINECT){
 
 }
 
+//Destructor
 loader::~loader(){
 
 }
@@ -138,21 +149,30 @@ void loader::stop(){
 
 }
 
+//Metodo que devuelve el FRAME actual
 FrameRGBD loader::download(){
+	//Bloquear el mutex mientras de crea el FRAME
 	mtx_.lock();
 
-	//Crear el frame con el id consecutivo
-	std::stringstream idStream;
-	idStream << filesSaved++;
-	FrameRGBD frame(idStream.str());
-	//Copiar nube e imagen al frame
-	frame.Nube = global_cloud;
-	global_rgbFrame.copyTo(frame.Imagen);
+		//Crear el frame con el id consecutivo
+		std::stringstream idStream;
+		idStream << filesSaved++;
+		FrameRGBD frame(idStream.str());
 
-	global_frame = &frame;
+		//Copiar nube
+		frame.setNube(global_cloud);
+		//Copiar imagen RGB en el frame
+		frame.setImagenRGB(global_rgbFrame);
+		//Copiar imagen DEPTH
+		frame.setImagenDEPTH(global_depthFrame);
 
+		//Pasar el frame creado al global
+		global_frame = &frame;
+
+	//Desbloquear el mutex
 	mtx_.unlock();
 
+	//Devolver el FRAME creado en este metodo
 	return *global_frame;
 }
 
@@ -167,10 +187,13 @@ bool loader::read(){
 	//Si no hay error al leer, se carga la nueva imagen
 	bool error = frame.leer(framepath);
 	if(!error){
-		global_cloud = frame.Nube;
+		global_cloud = frame.getNube();
 		isCloud = true;
-		frame.Imagen.copyTo(global_rgbFrame);
+
+		frame.getImagenRGB().copyTo(global_rgbFrame);
+		frame.getImagenDEPTH().copyTo(global_depthFrame);
 		isImage = true;
+		isDepth = true;
 
 		global_frame = &frame;
 	}
@@ -204,15 +227,13 @@ void loader::image_callback (const boost::shared_ptr<pcl::io::Image>& image){
 	}
 
 	//cv::cvtColor(tempImage, bgrImage, cv::COLOR_RGB2BGR);
-	cv::cvtColor(tempImage, grayImage, cv::COLOR_RGB2GRAY);
-	equalizeHist(grayImage, grayImageeq);
-
+	
 	#if GPU
 		result = gpu_surf(grayImageeq);
 	#endif
 
 	if(!isImage){
-		global_rgbFrame = grayImageeq;
+		global_rgbFrame = tempImage;
 		isImage = true;
 	}
 	mtx_.unlock();
@@ -223,18 +244,19 @@ void loader::dephtImage_callback (const boost::shared_ptr<pcl::io::DepthImage>& 
 	int altura = image->getHeight();
 	int ancho = image->getWidth();
 	
-	cv::Mat bgrImage,grayImage,grayImageeq,result; 
 	cv::Mat tempImage = cv::Mat(altura, ancho, CV_32FC1); 
 	image->fillDepthImage(ancho,altura,(float*) tempImage.data,tempImage.step);
-	tempImage.convertTo(grayImage,CV_8UC1);
-	equalizeHist(grayImage, grayImageeq);
+	
+	
 	#if GPU
 		result = gpu_surf(grayImageeq);
 	#endif
 
-	cv::namedWindow("DepthImage", cv::WINDOW_AUTOSIZE );
-	imshow("DepthImage",tempImage);
-	cvWaitKey(3);
+	if(!isDepth){
+		global_depthFrame = tempImage;
+		isDepth = true;
+	}
+
 	mtx_.unlock();
 }
 
