@@ -52,7 +52,7 @@ bool Room::alinearICP(FrameRGBD &Frame){
 	//TODO: que la copia sea selectiva a espacios especificos
 	PointCloudPtrT copy_global_cloud;
 	if(global_cloud->empty())
-		copy_global_cloud = Frame.Nube;
+		copy_global_cloud = Frame.getNube();
 	else
 		copy_global_cloud = global_cloud;
 
@@ -60,7 +60,7 @@ bool Room::alinearICP(FrameRGBD &Frame){
 	PointCloudT Final;
 
 	//Configurar el ICP
-	icp.setInputSource(Frame.Nube);
+	icp.setInputSource(Frame.getNube());
 	icp.setInputTarget(copy_global_cloud);
 	icp.setMaximumIterations(10);
 	icp.setMaxCorrespondenceDistance(0.05);
