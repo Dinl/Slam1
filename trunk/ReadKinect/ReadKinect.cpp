@@ -6,7 +6,7 @@
 #include "Room.h"
 
 bool KINECT = true;
-loader cargador("grabacion3/", KINECT);
+loader cargador("grabacion4", KINECT);
 Room habitacion;
 
 

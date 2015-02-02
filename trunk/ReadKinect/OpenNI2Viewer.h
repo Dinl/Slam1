@@ -84,6 +84,17 @@ loader::loader(){
 //Constructor 2: Se selecciona entre el Kinect y el disco, con una ruta relativa PATH
 loader::loader(std::string path, bool KINECT){
 
+	//Inicializar variables
+	isCloud = false;
+	isImage = false;
+	isDepth = false;
+	isFile = false;
+	isFull = false;
+	isRun = false;
+	filesSaved = 0;
+	filesReaded = 0;
+	framepath = path;
+
 	boost::shared_ptr<pcl::visualization::CloudViewer> v (new pcl::visualization::CloudViewer("OpenNI viewer"));
 	viewer = v;
 
@@ -98,12 +109,8 @@ loader::loader(std::string path, bool KINECT){
 			openniGrabber->registerCallback(i_cloud);
 			openniGrabber->registerCallback(di_cloud);
 
-
-
 			//Inicializar variables
-			
 			isKinect = true;
-			
 		}
 		else
 			PCL_ERROR("Problem creating the openniGrabber \n");
@@ -113,16 +120,7 @@ loader::loader(std::string path, bool KINECT){
 		isKinect = false;
 
 
-	//Inicializar variables
-	isCloud = false;
-	isImage = false;
-	isDepth = false;
-	isFile = false;
-	isFull = false;
-	isRun = false;
-	filesSaved = 0;
-	filesReaded = 0;
-	framepath = path;
+
 
 
 }
@@ -157,7 +155,7 @@ FrameRGBD loader::download(){
 		//Crear el frame con el id consecutivo
 		std::stringstream idStream;
 		idStream << filesSaved++;
-		FrameRGBD frame(idStream.str());
+		FrameRGBD frame(idStream.str(),framepath);
 
 		//Copiar nube
 		frame.setNube(global_cloud);
