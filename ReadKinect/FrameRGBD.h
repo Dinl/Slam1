@@ -1,6 +1,8 @@
 #ifndef Frame_RGBD
 #define Frame_RGBD
 
+#include <windows.h>
+
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/visualization/cloud_viewer.h>
@@ -23,9 +25,12 @@ public:
 	//Id del Frame
 	std::string frameId;
 	std::string frameName;
+	std::string framePath;
 	std::string frameNubeName;
 	std::string frameImagenName;
-	std::string frameDepthnName;
+	std::string frameImagenGrisName;
+	std::string frameDepthn8Name;
+	std::string frameDepthn32Name;
 
 	//Descriptores y keypoints 2D
 	cv::Mat descriptores;
@@ -62,10 +67,14 @@ private:
 	cv::Mat ImagenRGB_gray;
 	cv::Mat ImagenDEPTH_32F;
 	cv::Mat ImagenDEPTH_8U;
+	cv::Mat ImagenDEPTH_8UC4;
 
 	//Variables para SURF
 	int minHessian;
 	cv::SurfDescriptorExtractor extractor;
+
+	//Metodos privados
+	bool dirExists(const std::string& dirName_in);
 
 };
 
@@ -75,22 +84,28 @@ private:
 *	TODO: Hacer que sea en carpeta
 ********************************************************************************/
 FrameRGBD::FrameRGBD(std::string id){
-	FrameRGBD::frameId = id;
+	frameId = id;
+	framePath = "";
 	frameName = "cuadro_"+frameId;
-	frameNubeName = frameName + "_nube.pcd";
-	frameImagenName = frameName + "_imagen.jpg";
-	frameDepthnName = frameName + "_depth.jpg";
+	frameNubeName = frameName + "/" + frameName + "_nube.pcd";
+	frameImagenName = frameName + "/" + frameName + "_imagen.jpg";
+	frameImagenGrisName = frameName + "/" + frameName + "_imagen_grises.jpg";
+	frameDepthn8Name = frameName + "/" + frameName + "_depth8.jpg";
+	frameDepthn32Name = frameName + "/" + frameName + "_depth32.jpg";
 
 	minHessian = 400;
 }
 
 //Constructor 2: Identificador + Ruta relativa path
 FrameRGBD::FrameRGBD(std::string id, std::string path){
-	FrameRGBD::frameId = id;
+	frameId = id;
+	framePath = path;
 	frameName = "cuadro_"+frameId;
-	frameNubeName = path + frameName + "/" + frameName + "_nube.pcd";
-	frameImagenName = path + frameName + "/" + frameName + "_imagen.jpg";
-	frameDepthnName = path + frameName + "/" + frameName + "_depth.jpg";
+	frameNubeName = path + "/" + frameName + "/" + frameName + "_nube.pcd";
+	frameImagenName = path + "/" + frameName + "/" + frameName + "_imagen.jpg";
+	frameImagenGrisName = path + "/" + frameName + "/" + frameName + "_imagen_grises.jpg";
+	frameDepthn8Name = path + "/" + frameName + "/" + frameName + "_depth8.jpg";
+	frameDepthn32Name = path + "/" + frameName + "/" + frameName + "_depth32.jpg";
 
 	minHessian = 400;
 }
@@ -112,8 +127,27 @@ void FrameRGBD::visualizar(){
 
 }
 
-//Metodo que guarda el Frame en el disco
+/********************************************************************************
+*	Metodo publico que guarda el Frame en el disco
+*		Se guarda en el disco:
+*		Nube PCD
+*		Imagen RGB 8UC3
+*		Imagen RGB 8UC1
+*		Imagen DEPTH 32F
+*		Imagen DEPTH 8UC4
+*	TODO: Sale error al guardar en 32F
+********************************************************************************/
 void FrameRGBD::guardar(){
+	//Crear la carpeta del frame
+	std::string a = ""+ framePath;
+	std::string folderCreateCommand;
+	if(dirExists(a))
+		folderCreateCommand = "mkdir " + framePath +"\\"+frameName;
+	else
+		folderCreateCommand = "mkdir -p " + framePath +"\\"+frameName;
+	
+	system(folderCreateCommand.c_str());
+
 	//Guardar la nube
 	if (pcl::io::savePCDFile(frameNubeName, *Nube, true) != 0)
 		PCL_ERROR("Problem saving %s.\n", frameNubeName.c_str());
@@ -122,12 +156,31 @@ void FrameRGBD::guardar(){
 	if (cv::imwrite(frameImagenName,ImagenRGB) == 0)
 		PCL_ERROR("Problem saving %s.\n", frameImagenName.c_str());
 
-	//Guardar la imagen RGB
-	if (cv::imwrite(frameDepthnName,ImagenDEPTH_8U) == 0)
-		PCL_ERROR("Problem saving %s.\n", frameDepthnName.c_str());
+	//Guardar la imagen RGB Grises
+	if (cv::imwrite(frameImagenGrisName,ImagenRGB_gray) == 0)
+		PCL_ERROR("Problem saving %s.\n", frameImagenGrisName.c_str());
+
+	//Guardar la imagen DEPTH 8U
+	if (cv::imwrite(frameDepthn8Name,ImagenDEPTH_8U) == 0)
+		PCL_ERROR("Problem saving %s.\n", frameDepthn8Name.c_str());
+
+	//Guardar la imagen DEPTH 32F
+	if (cv::imwrite(frameDepthn32Name,ImagenDEPTH_8UC4) == 0)
+		PCL_ERROR("Problem saving %s.\n", frameDepthn32Name.c_str());
+
+	std::cout << "hola" << endl;
+
 }
 
-//Metodo que lee el frame del disco
+/********************************************************************************
+*	Metodo que lee el frame del disco
+*		Se guarda en el disco:
+*		Nube PCD
+*		Imagen RGB 8UC3
+*		Imagen RGB 8UC1
+*		Imagen DEPTH 32F
+*		Imagen DEPTH 8UC4
+********************************************************************************/
 bool FrameRGBD::leer(std::string path){
 	pcl::PointCloud<PointT>::Ptr tempCloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	bool error = 0;
@@ -137,22 +190,33 @@ bool FrameRGBD::leer(std::string path){
 		PCL_ERROR("Problem reading %s.\n", frameNubeName.c_str());
 		error = 1;
 	}
-	//Remover los NAN para evitar errores
-	std::vector<int> indices;
-	pcl::removeNaNFromPointCloud(*tempCloud,*tempCloud, indices);
 	Nube = tempCloud;
 
-	//Cargar la imagen RGB
+	//Cargar la imagen RGB 
 	ImagenRGB = cv::imread(frameImagenName,CV_LOAD_IMAGE_COLOR);
 	if(!ImagenRGB.data){
 		PCL_ERROR("Problem reading %s.\n", frameImagenName.c_str());
 		error = 1;
 	}
 
-	//Cargar la imagen DEPTH
-	ImagenDEPTH_8U = cv::imread(frameDepthnName,CV_LOAD_IMAGE_COLOR);
+	//Cargar la imagen RGB Grises
+	ImagenRGB_gray = cv::imread(frameImagenGrisName,CV_LOAD_IMAGE_COLOR);
+	if(!ImagenRGB_gray.data){
+		PCL_ERROR("Problem reading %s.\n", frameImagenGrisName.c_str());
+		error = 1;
+	}
+	
+	//Cargar la imagen DEPTH 8U
+	ImagenDEPTH_8U = cv::imread(frameDepthn8Name,CV_LOAD_IMAGE_COLOR);
 	if(!ImagenDEPTH_8U.data){
-		PCL_ERROR("Problem reading %s.\n", frameDepthnName.c_str());
+		PCL_ERROR("Problem reading %s.\n", frameDepthn8Name.c_str());
+		error = 1;
+	}
+
+	//Cargar la imagen DEPTH 32F
+	ImagenDEPTH_8UC4 = cv::imread(frameDepthn32Name,CV_LOAD_IMAGE_COLOR || CV_LOAD_IMAGE_ANYDEPTH);
+	if(!ImagenDEPTH_8UC4.data){
+		PCL_ERROR("Problem reading %s.\n", frameDepthn32Name.c_str());
 		error = 1;
 	}
 
@@ -177,7 +241,18 @@ void FrameRGBD::calcularSURF(){
 *	TODO: Establecer el metodo para el calculo de SURF
 ********************************************************************************/
 void FrameRGBD::setNube(pcl::PointCloud<PointT>::ConstPtr cloud){
-	Nube = cloud;
+	
+	//Nube temporal
+	pcl::PointCloud<PointT>::Ptr tempCloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
+	*tempCloud = *cloud;
+	
+	//Remover los NAN para evitar errores
+	std::vector<int> indices;
+	pcl::removeNaNFromPointCloud(*tempCloud,*tempCloud, indices);
+
+	//Pasar la nube filtrada al objeto local
+	Nube = tempCloud;
+	
 }
 
 void FrameRGBD::rgb2cloud(int x, int y){
@@ -214,6 +289,7 @@ void FrameRGBD::setImagenDEPTH(cv::Mat &img){
 	//Copiar la imagen a 32F y 8U
 	img.copyTo(ImagenDEPTH_32F);
 	img.convertTo(ImagenDEPTH_8U,CV_8UC1);
+	ImagenDEPTH_8UC4 = cv::Mat(ImagenDEPTH_8U.rows, CV_8UC4, ImagenDEPTH_8U.cols, ImagenDEPTH_8U.data);
 
 	//Ecualizar la imagen
 	equalizeHist(ImagenDEPTH_8U, ImagenDEPTH_8U);
@@ -244,6 +320,17 @@ cv::Mat FrameRGBD::getImagenRGB(){
 ********************************************************************************/
 cv::Mat FrameRGBD::getImagenDEPTH(){
 	return ImagenDEPTH_8U;
+}
+
+bool FrameRGBD::dirExists(const std::string& dirName_in){
+  DWORD ftyp = GetFileAttributesA(dirName_in.c_str());
+  if (ftyp == INVALID_FILE_ATTRIBUTES)
+    return false;  //something is wrong with your path!
+
+  if (ftyp & FILE_ATTRIBUTE_DIRECTORY)
+    return true;   // this is a directory!
+
+  return false;    // this is not a directory!
 }
 
 #endif
