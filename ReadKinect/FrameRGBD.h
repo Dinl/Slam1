@@ -114,7 +114,10 @@ FrameRGBD::~FrameRGBD(){
 
 }
 
-//Metodo que visualiza el Frame
+/********************************************************************************
+*	Metodo publico que visualiza el Frame
+*
+********************************************************************************/
 void FrameRGBD::visualizar(){
 	//Mostrar primero la imagen
 	cv::namedWindow( "Imagen", cv::WINDOW_AUTOSIZE );
@@ -135,7 +138,7 @@ void FrameRGBD::visualizar(){
 *		Imagen RGB 8UC1
 *		Imagen DEPTH 32F
 *		Imagen DEPTH 8UC4
-*	TODO: Sale error al guardar en 32F
+*
 ********************************************************************************/
 void FrameRGBD::guardar(){
 	//Crear la carpeta del frame
