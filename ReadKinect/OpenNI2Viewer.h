@@ -24,7 +24,7 @@
 #include "opencv2/nonfree/gpu.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
-#include "FrameRGBD.h"
+#include "FrameRGBD.hpp"
 
 typedef pcl::PointXYZRGBA PointT;
 typedef pcl::PointCloud<PointT> PointCloudT;
@@ -118,11 +118,6 @@ loader::loader(std::string path, bool KINECT){
 	}
 	else
 		isKinect = false;
-
-
-
-
-
 }
 
 //Destructor
@@ -242,14 +237,11 @@ void loader::dephtImage_callback (const boost::shared_ptr<pcl::io::DepthImage>& 
 	int altura = image->getHeight();
 	int ancho = image->getWidth();
 	
-	cv::Mat tempImage = cv::Mat(altura, ancho, CV_32FC1); 
+	cv::Mat tempImage = cv::Mat(altura, ancho, CV_32FC1);
+	cv::Mat tempImageROI;
+	cv::Mat tempImageROIResize = cv::Mat(altura, ancho, CV_32FC1);
 	image->fillDepthImage(ancho,altura,(float*) tempImage.data,tempImage.step);
 	
-	
-	#if GPU
-		result = gpu_surf(grayImageeq);
-	#endif
-
 	if(!isDepth){
 		global_depthFrame = tempImage;
 		isDepth = true;
