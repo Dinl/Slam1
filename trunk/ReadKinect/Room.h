@@ -7,7 +7,7 @@
 #include <pcl/registration/icp.h>
 #include <pcl/filters/voxel_grid.h>
 
-#include "FrameRGBD.h"
+//#include "FrameRGBD.hpp"
 
 typedef pcl::PointXYZRGBA PointT;
 typedef pcl::PointCloud<PointT> PointCloudT;
@@ -24,7 +24,7 @@ public:
 	//Filtro
 	pcl::VoxelGrid<PointT> voxelFilter;
 
-	//Alinear 
+	//Metodos de alineacion 
 	bool alinearICP(FrameRGBD &Frame);
 
 	Room();
@@ -45,7 +45,7 @@ Room::~Room(){
 
 }
 
-//Metodo que alinea el frame con el mapa global
+//Metodo que alinea el frame con el mapa global con el metodo ICP de PCL
 bool Room::alinearICP(FrameRGBD &Frame){
 
 	//Primero copiar el mapa global
