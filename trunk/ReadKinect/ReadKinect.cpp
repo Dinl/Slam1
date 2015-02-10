@@ -5,8 +5,8 @@
 #include "OpenNI2Viewer.h"
 #include "Room.h"
 
-bool KINECT = true;
-loader cargador("grabacion2", KINECT);
+bool KINECT = false;
+loader cargador("grabacion1", KINECT);
 Room habitacion;
 
 
@@ -15,6 +15,7 @@ void obtenerFrames(){
 	if(KINECT){
 		while (!cargador.viewer->wasStopped())
 			if(cargador.isCloud && cargador.isImage && cargador.isDepth){
+				cargador.see();
 				FrameRGBD frame = cargador.download();
 				//habitacion.alinear(frame);
 				frame.guardar();
@@ -24,7 +25,7 @@ void obtenerFrames(){
 		while (!cargador.viewer->wasStopped())
 			if(!cargador.isCloud && !cargador.isImage){
 				//Leer el caargador y verificar lectura
-				bool error = cargador.read();
+				bool error = cargador.remember();
 			
 				//Si no hay error, continuar con el proceso, sino salir
 				if(!error){
@@ -45,8 +46,11 @@ void obtenerFrames(){
 void loopKinect(){
 	while (!cargador.viewer->wasStopped()){
 		if(cargador.isCloud && cargador.isImage){
-			//Mostrar la nube y copiarla en el frame			
-			cargador.viewer->showCloud(cargador.global_cloud);
+			//Mostrar la nube y copiarla en el frame	
+			if(KINECT)
+				cargador.viewer->showCloud(cargador.global_cloud);
+			else
+				cargador.viewer->showCloud(habitacion.getGlobalCloud());
 			//cargador.viewer->showCloud(habitacion.global_cloud);	
 			cargador.isCloud = false;
 

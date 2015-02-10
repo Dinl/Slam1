@@ -15,35 +15,46 @@ typedef pcl::PointCloud<PointT>::ConstPtr PointCloudPtrT;
 
 class Room{
 public:
-	//Nube que representa todo el ambiente
-	PointCloudPtrT global_cloud;
+	
+	/********************************************************************************
+	*	Constructor 1: Inicializar la nube
+	*	
+	********************************************************************************/
+	Room(){
+		PointCloudPtrT cloud_total (new PointCloudT);
+		global_cloud = cloud_total;
+	}
+
+	/********************************************************************************
+	*	Destructor 1: 
+	*	
+	********************************************************************************/
+	~Room(){
+
+
+	}
+
 
 	//Metodo de ICP propio de PCL
 	pcl::IterativeClosestPoint<PointT, PointT> icp;
 
+	//Metodo de ICP por features propio de PCL
+
 	//Filtro
 	pcl::VoxelGrid<PointT> voxelFilter;
 
-	//Metodos de alineacion 
+	//Metodo de alineacion ICP
 	bool alinearICP(FrameRGBD &Frame);
 
-	Room();
-	~Room();
+	//Metodos GET y SET
+	virtual pcl::PointCloud<PointT>::ConstPtr getGlobalCloud();
+
 private:
+	//Nube que representa todo el ambiente
+	PointCloudPtrT global_cloud;
 
 };
 
-//Constructor por defecto: 
-Room::Room(){
-	//Inicializar la nube
-	PointCloudPtrT cloud_total (new PointCloudT);
-	global_cloud = cloud_total;
-}
-
-//Destructor
-Room::~Room(){
-
-}
 
 //Metodo que alinea el frame con el mapa global con el metodo ICP de PCL
 bool Room::alinearICP(FrameRGBD &Frame){
@@ -52,7 +63,7 @@ bool Room::alinearICP(FrameRGBD &Frame){
 	//TODO: que la copia sea selectiva a espacios especificos
 	PointCloudPtrT copy_global_cloud;
 	if(global_cloud->empty())
-		copy_global_cloud = Frame.getNube();
+		copy_global_cloud = Frame.getKeyNube();
 	else
 		copy_global_cloud = global_cloud;
 
@@ -60,7 +71,7 @@ bool Room::alinearICP(FrameRGBD &Frame){
 	PointCloudT Final;
 
 	//Configurar el ICP
-	icp.setInputSource(Frame.getNube());
+	icp.setInputSource(Frame.getKeyNube());
 	icp.setInputTarget(copy_global_cloud);
 	icp.setMaximumIterations(10);
 	icp.setMaxCorrespondenceDistance(0.05);
@@ -89,4 +100,8 @@ bool Room::alinearICP(FrameRGBD &Frame){
 	}
 
 	return true;
+}
+
+pcl::PointCloud<PointT>::ConstPtr Room:: getGlobalCloud(){
+	return global_cloud;
 }

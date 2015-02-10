@@ -4,6 +4,7 @@
 /********************************************************************************
 *	Metodo publico que visualiza el Frame
 *
+*	TODO: Actualizar con argumento para que muestre imagenes o nubes
 ********************************************************************************/
 void FrameRGBD::visualizar(){
 	//Mostrar primero la imagen
@@ -21,10 +22,13 @@ void FrameRGBD::visualizar(){
 *	Metodo publico que guarda el Frame en el disco
 *		Se guarda en el disco:
 *		Nube PCD
+*		Nube keypoints PCD
 *		Imagen RGB 8UC3
 *		Imagen RGB 8UC1
 *		Imagen DEPTH 32F
-*		Imagen DEPTH 8UC4
+*		Imagen DEPTH 8U
+*		Keypoints vector
+*		Descriptores
 *
 ********************************************************************************/
 void FrameRGBD::guardar(){
@@ -42,6 +46,10 @@ void FrameRGBD::guardar(){
 	if (pcl::io::savePCDFile(frameNubeName, *Nube, true) != 0)
 		PCL_ERROR("Problem saving %s.\n", frameNubeName.c_str());
 
+	//Guardar la nube de keypoints
+	if (pcl::io::savePCDFile(frameKeyNubeName, *keypointNube, true) != 0)
+		PCL_ERROR("Problem saving %s.\n", frameNubeName.c_str());
+
 	//Guardar la imagen RGB
 	if (cv::imwrite(frameImagenName,ImagenRGB) == 0)
 		PCL_ERROR("Problem saving %s.\n", frameImagenName.c_str());
@@ -55,29 +63,33 @@ void FrameRGBD::guardar(){
 		PCL_ERROR("Problem saving %s.\n", frameDepthn8Name.c_str());
 
 	//Guardar la imagen DEPTH 32F
-	cv::FileStorage fs(frameDepthn32Name, cv::FileStorage::WRITE);
-	fs << "DEPTH32F" << ImagenDEPTH_32F;
+	cv::FileStorage fs1(frameDepthn32Name, cv::FileStorage::WRITE);
+	fs1 << "DEPTH32F" << ImagenDEPTH_32F;
+	fs1.release();
 
 	//Guardar los keypoints y los descriptores
-	cv::FileStorage fs(frameInfoName, cv::FileStorage::WRITE);
-	fs << "keypoints" << keypoints;
-	fs << "descriptors" << descriptores;
-
-	std::cout << "hola" << endl;
-
+	cv::FileStorage fs2(frameInfoName, cv::FileStorage::WRITE);
+	cv::write(fs2, "keypoints", keypoints);
+	fs2 << "descriptors" << descriptores;
+	fs2.release();
 }
 
 /********************************************************************************
 *	Metodo que lee el frame del disco
 *		Se guarda en el disco:
 *		Nube PCD
+*		Nube keypoints PCD
 *		Imagen RGB 8UC3
 *		Imagen RGB 8UC1
 *		Imagen DEPTH 32F
-*		Imagen DEPTH 8UC4
+*		Imagen DEPTH 8U
+*		Keypoints vector
+*		Descriptores
+*
 ********************************************************************************/
 bool FrameRGBD::leer(std::string path){
 	pcl::PointCloud<PointT>::Ptr tempCloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
+	pcl::PointCloud<PointT>::Ptr tempKeyCloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	bool error = 0;
 
 	//Cargar la nube de puntos
@@ -87,6 +99,13 @@ bool FrameRGBD::leer(std::string path){
 	}
 	Nube = tempCloud;
 
+	//Cargar la nube de key puntos
+	if(pcl::io::loadPCDFile<PointT>(frameKeyNubeName,*tempKeyCloud) != 0){
+		PCL_ERROR("Problem reading %s.\n", frameNubeName.c_str());
+		error = 1;
+	}
+	keypointNube = tempKeyCloud;
+
 	//Cargar la imagen RGB 
 	ImagenRGB = cv::imread(frameImagenName,CV_LOAD_IMAGE_COLOR);
 	if(!ImagenRGB.data){
@@ -95,27 +114,30 @@ bool FrameRGBD::leer(std::string path){
 	}
 
 	//Cargar la imagen RGB Grises
-	ImagenRGB_gray = cv::imread(frameImagenGrisName,CV_LOAD_IMAGE_COLOR);
+	ImagenRGB_gray = cv::imread(frameImagenGrisName,CV_LOAD_IMAGE_GRAYSCALE);
 	if(!ImagenRGB_gray.data){
 		PCL_ERROR("Problem reading %s.\n", frameImagenGrisName.c_str());
 		error = 1;
 	}
 	
 	//Cargar la imagen DEPTH 8U
-	ImagenDEPTH_8U = cv::imread(frameDepthn8Name,CV_LOAD_IMAGE_COLOR);
+	ImagenDEPTH_8U = cv::imread(frameDepthn8Name,CV_LOAD_IMAGE_GRAYSCALE);
 	if(!ImagenDEPTH_8U.data){
 		PCL_ERROR("Problem reading %s.\n", frameDepthn8Name.c_str());
 		error = 1;
 	}
 
 	//Cargar la imagen DEPTH 32F
-	cv::FileStorage fs(frameDepthn32Name, cv::FileStorage::READ);
-	fs["DEPTH32F"] >> ImagenDEPTH_32F;
+	cv::FileStorage fs1(frameDepthn32Name, cv::FileStorage::READ);
+	fs1["DEPTH32F"] >> ImagenDEPTH_32F;
+	fs1.release();
 
 	//Cargar los keypoints y los descriptores
-	cv::FileStorage fs(frameInfoName, cv::FileStorage::READ);
-	fs["keypoints"] >> keypoints;
-	fs["keypoints"] >> descriptores;
+	cv::FileStorage fs2(frameInfoName, cv::FileStorage::READ);
+	cv::FileNode fs2Node = fs2["keypoints"];
+	read(fs2Node, keypoints);
+	fs2["descriptors"] >> descriptores;
+	fs2.release();
 
 	return error;
 }
@@ -149,13 +171,14 @@ void FrameRGBD::calcularSURF(){
 	}
 
 	for(int i=0; i<keypoints_depth.size(); i++){
-		int x = keypoints_rgb.at(i).pt.x;
-		int y = keypoints_rgb.at(i).pt.y;
+		int x = keypoints_depth.at(i).pt.x;
+		int y = keypoints_depth.at(i).pt.y;
 		int indice = rgb2cloud(x,y);
 
 		float cx = Nube->at(indice).x;
 		if(cx==cx){
-
+			pcl::PointXYZRGBA punto = Nube->at(indice);
+			keypointNube->push_back(punto);
 			keypoints.push_back(keypoints_depth[i]);
 		}
 
@@ -253,6 +276,14 @@ void FrameRGBD::setImagenDEPTH(cv::Mat &img){
 ********************************************************************************/
 pcl::PointCloud<PointT>::ConstPtr FrameRGBD::getNube(){
 	return Nube;
+}
+
+/********************************************************************************
+*	Metodo publico del FRAMERGBD para obtener la nube de keypoints
+*
+********************************************************************************/
+pcl::PointCloud<PointT>::ConstPtr FrameRGBD::getKeyNube(){
+	return keypointNube;
 }
 
 /********************************************************************************
