@@ -28,6 +28,7 @@ public:
 	std::string frameName;
 	std::string framePath;
 	std::string frameNubeName;
+	std::string frameKeyNubeName;
 	std::string frameImagenName;
 	std::string frameImagenGrisName;
 	std::string frameDepthn8Name;
@@ -44,6 +45,7 @@ public:
 		framePath = "";
 		frameName = "cuadro_"+frameId;
 		frameNubeName = frameName + "/" + frameName + "_nube.pcd";
+		frameKeyNubeName = frameName + "/" + frameName + "_keyNube.pcd";
 		frameImagenName = frameName + "/" + frameName + "_imagen.jpg";
 		frameImagenGrisName = frameName + "/" + frameName + "_imagen_grises.jpg";
 		frameDepthn8Name = frameName + "/" + frameName + "_depth8.jpg";
@@ -62,6 +64,7 @@ public:
 		framePath = path;
 		frameName = "cuadro_"+frameId;
 		frameNubeName = path + "/" + frameName + "/" + frameName + "_nube.pcd";
+		frameKeyNubeName = path + "/" + frameName + "/" + frameName + "_keyNube.pcd";
 		frameImagenName = path + "/" + frameName + "/" + frameName + "_imagen.jpg";
 		frameImagenGrisName = path + "/" + frameName + "/" + frameName + "_imagen_grises.jpg";
 		frameDepthn8Name = path + "/" + frameName + "/" + frameName + "_depth8.jpg";
@@ -90,6 +93,7 @@ public:
 	virtual void setImagenRGB(cv::Mat &img);
 	virtual void setImagenDEPTH(cv::Mat &img);
 	virtual pcl::PointCloud<PointT>::ConstPtr getNube();
+	virtual pcl::PointCloud<PointT>::ConstPtr getKeyNube();
 	virtual cv::Mat getImagenRGB();
 	virtual cv::Mat getImagenDEPTH();
 	virtual cv::Mat getDescriptors();
@@ -112,7 +116,7 @@ private:
 
 	//Descriptores y keypoints 2D
 	cv::Mat descriptores;
-	std::vector<cv::KeyPoint> keypoints_rgb, keypoints_depth, keypoints;
+	cv::vector<cv::KeyPoint> keypoints_rgb, keypoints_depth, keypoints;
 
 	//Metodos privados
 	virtual bool dirExists(const std::string& dirName_in);
