@@ -58,6 +58,10 @@ void FrameRGBD::guardar(){
 	cv::FileStorage fs(frameDepthn32Name, cv::FileStorage::WRITE);
 	fs << "DEPTH32F" << ImagenDEPTH_32F;
 
+	//Guardar los keypoints y los descriptores
+	cv::FileStorage fs(frameInfoName, cv::FileStorage::WRITE);
+	fs << "keypoints" << keypoints;
+	fs << "descriptors" << descriptores;
 
 	std::cout << "hola" << endl;
 
@@ -108,6 +112,11 @@ bool FrameRGBD::leer(std::string path){
 	cv::FileStorage fs(frameDepthn32Name, cv::FileStorage::READ);
 	fs["DEPTH32F"] >> ImagenDEPTH_32F;
 
+	//Cargar los keypoints y los descriptores
+	cv::FileStorage fs(frameInfoName, cv::FileStorage::READ);
+	fs["keypoints"] >> keypoints;
+	fs["keypoints"] >> descriptores;
+
 	return error;
 }
 
@@ -133,7 +142,8 @@ void FrameRGBD::calcularSURF(){
 
 		float cx = Nube->at(indice).x;
 		if(cx==cx){
-			//keypointNube->push_back(Nube->at(indice));
+			pcl::PointXYZRGBA punto = Nube->at(indice);
+			keypointNube->push_back(punto);
 			keypoints.push_back(keypoints_rgb[i]);
 		}
 	}
@@ -180,7 +190,7 @@ void FrameRGBD::setNube(pcl::PointCloud<PointT>::ConstPtr cloud){
 	Nube = tempCloud;
 
 	//Nube temporal para los keypoints
-	pcl::PointCloud<PointT>::Ptr tempKeyCloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
+	pcl::PointCloud<PointT>::Ptr tempKeyCloud (new pcl::PointCloud<PointT>);
 	keypointNube = tempKeyCloud;
 
 }

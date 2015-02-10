@@ -32,6 +32,7 @@ public:
 	std::string frameImagenGrisName;
 	std::string frameDepthn8Name;
 	std::string frameDepthn32Name;
+	std::string frameInfoName;
 
 	/********************************************************************************
 	*	Constructor 1: Solo con el identificador
@@ -46,14 +47,15 @@ public:
 		frameImagenName = frameName + "/" + frameName + "_imagen.jpg";
 		frameImagenGrisName = frameName + "/" + frameName + "_imagen_grises.jpg";
 		frameDepthn8Name = frameName + "/" + frameName + "_depth8.jpg";
-		frameDepthn32Name = frameName + "/" + frameName + "_depth32.jpg";
+		frameDepthn32Name = frameName + "/" + frameName + "_depth32.xml";
+		frameInfoName = frameName + "/" + frameName + "_info.xml";
 
 		minHessian = 400;
 	}
 	/********************************************************************************
 	*	Constructor 1: Identificador + Ruta relativa path
 	*	
-	*	TODO: Hacer que sea en carpeta
+	*	
 	********************************************************************************/
 	FrameRGBD(std::string id, std::string path){
 		frameId = id;
@@ -64,6 +66,7 @@ public:
 		frameImagenGrisName = path + "/" + frameName + "/" + frameName + "_imagen_grises.jpg";
 		frameDepthn8Name = path + "/" + frameName + "/" + frameName + "_depth8.jpg";
 		frameDepthn32Name = path + "/" + frameName + "/" + frameName + "_depth32.xml";
+		frameInfoName = path + "/" + frameName + "/" + frameName + "_info.xml";
 
 		minHessian = 400;
 	}
@@ -96,7 +99,7 @@ private:
 	//VARIABLES DEL FRAME
 	//La nube de PCL con informacion de color
 	pcl::PointCloud<PointT>::ConstPtr Nube;
-	pcl::PointCloud<PointT>::ConstPtr keypointNube;
+	pcl::PointCloud<PointT>::Ptr keypointNube;
 	//Cuadro con la imagen RGB
 	cv::Mat ImagenRGB;
 	cv::Mat ImagenRGB_gray;
