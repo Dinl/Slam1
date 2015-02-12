@@ -2,8 +2,8 @@
 //
 
 #include "stdafx.h"
-#include "OpenNI2Viewer.h"
 #include "Room.h"
+#include "Loader.h"
 
 bool KINECT = false;
 loader cargador("grabacion1", KINECT);
@@ -64,6 +64,13 @@ void loopKinect(){
 }
 
 int main(int argc, char** argv){
+
+	//Verificar si se usa GPU, para inciar las librerias
+	//CAUTION: DEMORADO!!! (~2min)
+	#if GPU
+		cv::gpu::GpuMat G_initMat;
+		G_initMat.create(1, 1, CV_8U);
+	#endif
 
 	//Iniciar el cargador
 	cargador.start();

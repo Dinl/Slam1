@@ -1,7 +1,10 @@
-//#ifndef Frame_RGBD
-//#define Frame_RGBD
+#ifndef Frame_RGBD_H
+#define Frame_RGBD_H
+
+#define GPU 0
 
 #include "stdafx.h"
+#define NOMINMAX
 #include <windows.h>
 
 #include <pcl/io/pcd_io.h>
@@ -13,9 +16,14 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/nonfree/nonfree.hpp>
+#if GPU
+#include <opencv2/gpu/gpu.hpp>
+#include <opencv2/nonfree/gpu.hpp>
+#endif
 
 typedef pcl::PointXYZRGBA PointT;
 typedef pcl::PointCloud<PointT> PointCloudT;
@@ -106,13 +114,23 @@ private:
 	pcl::PointCloud<PointT>::Ptr keypointNube;
 	//Cuadro con la imagen RGB
 	cv::Mat ImagenRGB;
-	cv::Mat ImagenRGB_gray;
 	cv::Mat ImagenDEPTH_32F;
+	cv::Mat ImagenRGB_gray;
 	cv::Mat ImagenDEPTH_8U;
 
+	//Si esta habilitado, se crean GPUMAT
+	#if GPU
+		cv::gpu::GpuMat G_matRGB;
+		cv::gpu::GpuMat G_matDEPTH;
+	#endif
+	
 	//Variables para SURF
 	int minHessian;
-	cv::SurfDescriptorExtractor extractor;
+	#if GPU
+		cv::gpu::SURF_GPU extractor;
+	#else
+		cv::SurfDescriptorExtractor extractor;
+	#endif
 
 	//Descriptores y keypoints 2D
 	cv::Mat descriptores;
@@ -124,4 +142,4 @@ private:
 	virtual int rgb2cloud(int x, int y);
 };
 
-//#endif
+#endif
