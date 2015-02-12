@@ -146,7 +146,7 @@ bool FrameRGBD::leer(std::string path){
 /********************************************************************************
 *	Metodo privado del FRAMERGBD para calcular los keyoints y descriptores SURF
 *
-*	
+*	TODO: Incluir el metodo GPU
 ********************************************************************************/
 void FrameRGBD::calcularSURF(){
 	//Crear el objeto SURF
@@ -222,7 +222,6 @@ void FrameRGBD::setNube(pcl::PointCloud<PointT>::ConstPtr cloud){
 *	Metodo privado del FRAMERGBD convertir un punto XY de la imagen
 *	en el punto XYZ de la nube de puntos
 *
-*	TODO: 
 ********************************************************************************/
 int FrameRGBD::rgb2cloud(int x, int y){
 	int pcl_index = ((ImagenRGB.cols * (y-1)) + x);
@@ -234,7 +233,6 @@ int FrameRGBD::rgb2cloud(int x, int y){
 *	Metodo publico del FRAMERGBD para establecer la imagen RBG y una copia a gris
 *	img	->	imagen RGB, CV_8UC3
 *
-*	TODO: Establecer el metodo para el calculo de SURF
 ********************************************************************************/
 void FrameRGBD::setImagenRGB(cv::Mat &img){
 	//Copiar la imagen
@@ -253,7 +251,6 @@ void FrameRGBD::setImagenRGB(cv::Mat &img){
 *	Metodo publico del FRAMERGBD para establecer la imagen DEPTH 
 *	img	->	imagen gris, CV_32FC1
 *
-*	TODO: Alinear el DEPTH con el RGB, posiblemente toca curvar el espacio
 ********************************************************************************/
 void FrameRGBD::setImagenDEPTH(cv::Mat &img){
 
