@@ -1,8 +1,12 @@
 #include "stdafx.h"
 #include "Room.h"
 
-
-//Metodo que alinea el frame con el mapa global con el metodo ICP de PCL
+/********************************************************************************
+*	Metodo publico del Room que alinea el frame con el mapa global con el 
+*	metodo ICP de PCL
+*
+*	TODO: Calcular mejor los parametros del ICP para que sea una comparacion justa
+********************************************************************************/
 bool Room::alinearICP(FrameRGBD &Frame){
 
 	//Primero copiar el mapa global
@@ -49,9 +53,37 @@ bool Room::alinearICP(FrameRGBD &Frame){
 	return true;
 }
 
-//Metodo que alinea el frame con el mapa global con el metodo SANN propuesto
+/********************************************************************************
+*	Metodo publico del Room que alinea el frame con el mapa global con el metodo
+*	SANN propuesto
+*
+********************************************************************************/
 bool Room::alinearSANN(FrameRGBD &Frame){
+	
+	//Primero copiar el mapa global
+	//Si el mapa global no tiene datos, se toma el 
+	//frame como mapa global
+	//TODO: que la copia sea selectiva a espacios especificos
+	PointCloudPtrT copy_global_cloud;
+	if(global_cloud->empty())
+		copy_global_cloud = Frame.getKeyNube();
+	else
+		copy_global_cloud = global_cloud;
+	
+	//Crear una nube que contendra temporalmente el resultado
+	PointCloudT Final;
+	
+	//Declaracion de variables de clasificador
 	SANN bestMatcher;
+	std::vector<cv::DMatch> matches;
+	cv::Mat descriptores_frame;
+
+	//Obtener los descriptores del frame
+	Frame.getDescriptors().copyTo(descriptores_frame);
+
+	//Hallar los descriptores similares
+	bestMatcher.Match(descriptores_globales, descriptores_frame,matches);
+
 
 	return true;
 }

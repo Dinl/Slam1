@@ -9,9 +9,13 @@ bool KINECT = false;
 loader cargador("grabacion1", KINECT);
 Room habitacion;
 
-
-//Hilo para obtener los frames y seguir con el proceso
+/********************************************************************************
+*	Hilo para obtener los frames y seguir con el proceso
+*
+********************************************************************************/
 void obtenerFrames(){
+	//Si se va a usar el Kinect entonces usar la funcion see, en caso contrario se
+	//usa remember
 	if(KINECT){
 		while (!cargador.viewer->wasStopped())
 			if(cargador.isCloud && cargador.isImage && cargador.isDepth){
@@ -42,7 +46,10 @@ void obtenerFrames(){
 	
 }
 
-//Hilo para mantener vivo el openNI
+/********************************************************************************
+*	Hilo para mantener vivo el openNI
+*
+********************************************************************************/
 void loopKinect(){
 	while (!cargador.viewer->wasStopped()){
 		if(cargador.isCloud && cargador.isImage){
@@ -63,6 +70,11 @@ void loopKinect(){
 	}
 }
 
+/********************************************************************************
+*	MAIN
+*
+*	No recibe ningun argumento!
+********************************************************************************/
 int main(int argc, char** argv){
 
 	//Verificar si se usa GPU, para inciar las librerias
@@ -75,7 +87,7 @@ int main(int argc, char** argv){
 	//Iniciar el cargador
 	cargador.start();
 	
-	//Crear 2 hilos, para obtener imagenes y para mostrar
+	//Crear 2 hilos, para obtener/calcular imagenes y para mostrar
 	boost::thread* loopHilo = new boost::thread(loopKinect);
 	boost::thread* obtenerHilo = new boost::thread(obtenerFrames);
 	loopHilo->join();

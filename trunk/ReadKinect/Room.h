@@ -59,6 +59,7 @@ public:
 private:
 	//Nube que representa todo el ambiente
 	PointCloudPtrT global_cloud;
+	cv::Mat descriptores_globales;
 
 };
 
