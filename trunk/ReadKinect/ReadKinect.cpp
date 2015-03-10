@@ -35,7 +35,8 @@ void obtenerFrames(){
 				if(!error){
 					//Descargar el frame actual para procesar
 					FrameRGBD frame = cargador.download();
-					habitacion.alinearICP(frame);
+					//habitacion.alinearICP(frame);
+ 					habitacion.alinearCERES(frame);
 				}				
 				else{
 					PCL_WARN("Fin de la lectura!");

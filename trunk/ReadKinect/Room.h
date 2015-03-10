@@ -51,7 +51,7 @@ public:
 	bool alinearICP(FrameRGBD &Frame);
 
 	//Metodo de alineacion SANN
-	bool alinearSANN(FrameRGBD &Frame);
+	bool alinearCERES(FrameRGBD &Frame);
 
 	//Metodos GET y SET
 	virtual pcl::PointCloud<PointT>::ConstPtr getGlobalCloud();

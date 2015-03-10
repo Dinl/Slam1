@@ -58,31 +58,55 @@ bool Room::alinearICP(FrameRGBD &Frame){
 *	SANN propuesto
 *
 ********************************************************************************/
-bool Room::alinearSANN(FrameRGBD &Frame){
+bool Room::alinearCERES(FrameRGBD &Frame){
 	
 	//Primero copiar el mapa global
 	//Si el mapa global no tiene datos, se toma el 
-	//frame como mapa global
+	//frame como mapa global junto con sus descriptores
 	//TODO: que la copia sea selectiva a espacios especificos
 	PointCloudPtrT copy_global_cloud;
-	if(global_cloud->empty())
+	if(global_cloud->empty()){
 		copy_global_cloud = Frame.getKeyNube();
-	else
+		Frame.getDescriptors().copyTo(descriptores_globales);
+	}
+	else{
 		copy_global_cloud = global_cloud;
+
+	}
 	
 	//Crear una nube que contendra temporalmente el resultado
 	PointCloudT Final;
 	
-	//Declaracion de variables de clasificador
-	SANN bestMatcher;
-	std::vector<cv::DMatch> matches;
+	//Declaracion de variables de clasificador (Alternar entre SANN y FLANN para desarrollo)
+	//SANN bestMatcher;
+	cv::FlannBasedMatcher bestMatcher;
+
+	std::vector<cv::DMatch> matches, matchesFilter;
 	cv::Mat descriptores_frame;
 
 	//Obtener los descriptores del frame
 	Frame.getDescriptors().copyTo(descriptores_frame);
 
 	//Hallar los descriptores similares
-	bestMatcher.Match(descriptores_globales, descriptores_frame,matches);
+	bestMatcher.match(descriptores_globales, descriptores_frame,matchesFilter);
+
+	//Halla min/max de las distancias correspondientes a los puntos match
+	float min = 9999999, max = -9999999;
+	for(int i=0; i < matchesFilter.size(); i++)
+	if(matchesFilter[i].distance < min)
+		min = matchesFilter[i].distance;
+	else if(matchesFilter[i].distance > max)
+		max = matchesFilter[i].distance;
+
+	//Hallar el limite para el mejor % de distancias
+	float limite = (max-min)*0.1 + min;
+	for(int i=0; i < matchesFilter.size(); i++)
+		if(matchesFilter[i].distance <= limite)
+			matches.push_back(matchesFilter[i]);
+
+
+
+	std::cout << "funcional  \n";
 
 
 	return true;
