@@ -103,7 +103,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;GLOG_NO_ABBREVIATED_SEVERITIES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>C:\libs\PCL\include\pcl-1.8;C:\libs\boost;C:\libs\flann\include;C:\libs\qhull\include;C:\libs\VTK\include\vtk-5.10;C:\libs\eigen\include\eigen3;C:\libs\OpenNI2\Include;C:\libs\opencv\include;C:\libs\opencv\include\opencv;C:\libs\CERES\include;C:\libs\gflags\Include;C:\libs\glog\src\windows;C:\libs\suitesparce\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -151,6 +151,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="alineadorCERES.h" />
     <ClInclude Include="FrameRGBD.h" />
     <ClInclude Include="GPUSurfExtractor.h" />
     <ClInclude Include="Loader.h" />
@@ -161,7 +162,6 @@
     <ClInclude Include="VisualFeatureDescriptorExtractor.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="alineadorCERES.cpp" />
     <ClCompile Include="FrameRGBD.cpp" />
     <ClCompile Include="Loader.cpp" />
     <ClCompile Include="ReadKinect.cpp" />
