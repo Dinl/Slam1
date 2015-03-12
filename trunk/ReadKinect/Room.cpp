@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Room.h"
 
+
 /********************************************************************************
 *	Metodo publico del Room que alinea el frame con el mapa global con el 
 *	metodo ICP de PCL
@@ -60,23 +61,25 @@ bool Room::alinearICP(FrameRGBD &Frame){
 ********************************************************************************/
 bool Room::alinearCERES(FrameRGBD &Frame){
 	
-	//Primero copiar el mapa global
-	//Si el mapa global no tiene datos, se toma el 
-	//frame como mapa global junto con sus descriptores
+	//1. COPIAR EL MAPA GLOBAL
+	//Si el mapa global no tiene datos, se toma el frame como mapa global junto 
+	//con sus descriptores y keypoints
 	//TODO: que la copia sea selectiva a espacios especificos
 	PointCloudPtrT copy_global_cloud;
+	PointCloudPtrT copy_global_key_cloud;
+	PointCloudT Final;
 	if(global_cloud->empty()){
-		copy_global_cloud = Frame.getKeyNube();
+		copy_global_cloud = Frame.getNube();
+		copy_global_key_cloud = Frame.getKeyNube();
 		Frame.getDescriptors().copyTo(descriptores_globales);
+		keypoints_globales.swap(Frame.getKeypoints());
 	}
 	else{
 		copy_global_cloud = global_cloud;
-
+		copy_global_key_cloud = globalKeyCloud;
 	}
-	
-	//Crear una nube que contendra temporalmente el resultado
-	PointCloudT Final;
-	
+
+	//2. DECLARAR VARIABLES PARA ALINEAR
 	//Declaracion de variables de clasificador (Alternar entre SANN y FLANN para desarrollo)
 	//SANN bestMatcher;
 	cv::FlannBasedMatcher bestMatcher;
@@ -84,18 +87,34 @@ bool Room::alinearCERES(FrameRGBD &Frame){
 	std::vector<cv::DMatch> matches, matchesFilter;
 	cv::Mat descriptores_frame;
 
-	//Obtener los descriptores del frame
-	Frame.getDescriptors().copyTo(descriptores_frame);
+	ceres::Problem problem3D;
+	double *extrinseca;
+	extrinseca = new double[6];
+	extrinseca[0] = 0;
+	extrinseca[1] = 0;
+	extrinseca[2] = 0;
+	extrinseca[3] = 0;
+	extrinseca[4] = 0;
+	extrinseca[5] = 0;
 
+	//3. OBTENER NUBES, imagenes, KEYPOINTS Y DESCRIPTORES
+	PointCloudPtrT frame_cloud = Frame.getNube();
+	Frame.getDescriptors().copyTo(descriptores_frame);
+	std::vector<cv::KeyPoint> keypoints_frame(Frame.getKeypoints());
+	cv::Mat imagen_frame;
+	Frame.getImagenRGB().copyTo(imagen_frame);
+
+	//4. MATCH!
+	//Todo: pasar a un metodo aparte que halle match
 	//Hallar los descriptores similares
 	bestMatcher.match(descriptores_globales, descriptores_frame,matchesFilter);
 
 	//Halla min/max de las distancias correspondientes a los puntos match
-	float min = 9999999, max = -9999999;
+	float min = 0, max = 0;
 	for(int i=0; i < matchesFilter.size(); i++)
-	if(matchesFilter[i].distance < min)
+	if(matchesFilter[i].distance <= min)
 		min = matchesFilter[i].distance;
-	else if(matchesFilter[i].distance > max)
+	else if(matchesFilter[i].distance >= max)
 		max = matchesFilter[i].distance;
 
 	//Hallar el limite para el mejor % de distancias
@@ -103,10 +122,6 @@ bool Room::alinearCERES(FrameRGBD &Frame){
 	for(int i=0; i < matchesFilter.size(); i++)
 		if(matchesFilter[i].distance <= limite)
 			matches.push_back(matchesFilter[i]);
-
-
-
-	std::cout << "funcional  \n";
 
 
 	return true;
