@@ -81,6 +81,10 @@ private:
 
 	//Matriz que representa los valores de la camara
 	double *intrinseca;
+
+	//Metodos de filtrado
+	void anguloFilter(std::vector<cv::KeyPoint> keypoints_scene1, std::vector<cv::KeyPoint> keypoints_scene2, std::vector< cv::DMatch > &matchesFilter, std::vector<cv::DMatch> &matches);
+	void randomFilter(std::vector< cv::DMatch > matchesFilter);
 };
 
 #endif

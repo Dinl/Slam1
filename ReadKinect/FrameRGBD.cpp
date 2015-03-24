@@ -162,9 +162,12 @@ void FrameRGBD::calcularSURF(){
 		int y = keypoints_rgb.at(i).pt.y;
 		int indice = rgb2cloud(x,y);
 
-		float cx = Nube->at(indice).x;
-		if(cx==cx){
-			pcl::PointXYZRGBA punto = Nube->at(indice);
+		float cx = Nube->at(x,y).x;
+		float cy = Nube->at(x,y).y;
+		float cz = Nube->at(x,y).z;
+
+		if(cx==cx && cy==cy && cz==cz){
+			pcl::PointXYZRGBA punto = Nube->at(x,y);
 			keypointNube->push_back(punto);
 			keypoints.push_back(keypoints_rgb[i]);
 		}
@@ -175,9 +178,11 @@ void FrameRGBD::calcularSURF(){
 		int y = keypoints_depth.at(i).pt.y;
 		int indice = rgb2cloud(x,y);
 
-		float cx = Nube->at(indice).x;
-		if(cx==cx){
-			pcl::PointXYZRGBA punto = Nube->at(indice);
+		float cx = Nube->at(x,y).x;
+		float cy = Nube->at(x,y).y;
+		float cz = Nube->at(x,y).z;
+		if(cx==cx && cy==cy && cz==cz){
+			pcl::PointXYZRGBA punto = Nube->at(x,y);
 			keypointNube->push_back(punto);
 			keypoints.push_back(keypoints_depth[i]);
 		}

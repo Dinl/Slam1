@@ -7,10 +7,17 @@
 #include <ceres/jet.h>
 #include <ceres/rotation.h>
 
+/***********************************************************************************
+	*	Clase T para realizar la alineacion de observaciones entre 2 nubes
+	*
+************************************************************************************/
 class alineador3D{
 public:
 	
-	//Constructor, el punto de la primera imagen 
+	/***********************************************************************************
+	*	Constructor:
+	*	Se crea con el punto XYZ de la primera nube 
+	***********************************************************************************/
 	alineador3D(double original_x, double original_y, double original_z){
 		P1_x = original_x;
 		P1_y = original_y;
@@ -18,30 +25,18 @@ public:
 	};
 
 	/***********************************************************************************
-	*	Operador de costo utilizado por CERES
-	*	Tmatrix -> Ingresa como un array de 6 valores:
-	*				Tmatrix[0] -> Angulo yaw
-	*				Tmatrix[1] -> Angulo pitch
-	*				Tmatrix[2] -> Angulo roll
-	*				Tmatrix[3] -> Traslacion en X
-	*				Tmatrix[4] -> Traslacion en Y
-	*				Tmatrix[5] -> Traslacion en Z
-	*				Tmatrix[6] -> distancia focal X
-	*				Tmatrix[7] -> distancia focal Y
-	*				Tmatrix[8] -> Centro de la imagen en X
-	*				Tmatrix[9] -> Centro de la imagen en Y
-	*				Tmatrix[10] -> K1
-	*				Tmatrix[11] -> K2
+	*	Operador
+	*	Es el operador quien recibe y calcula los residuos para cada punto
 	*
-	*	punto -> Ingresa como un array de 3 valores con XYZ del destino
-	*				punto[0] -> X
-	*				punto[1] -> Y
-	*				punto[2] -> Z
+	*	Textrinseca -> Array 6 double: [Rx Ry Rz X Y Z] rotaciones en el sentido de euler
+	*	punto3D		-> Punto XYZ correspondiente al punto2D
 	*
-	*	residuos -> Array de 3 valores con los residuos en XYZ usado por ceres
-	*
-	************************************************************************************/
-
+	*	El proceso consiste en:
+	*	
+	*	punto2D -> (intrinseca) -> punto2d3d -> (extrinseca) -> transformedpoint3d
+	*	-> (intrinseca) -> transformedPunto2d
+	*	residuo = original - transformedPunto2d
+	***********************************************************************************/
 	template <typename T>
 	bool operator()(const T* const Textrinseca, const T* const punto3D, T* residuos) const {
 		
